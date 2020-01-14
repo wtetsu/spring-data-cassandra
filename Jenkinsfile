@@ -25,7 +25,8 @@ pipeline {
 						docker {
 							image 'adoptopenjdk/openjdk8:latest'
 							label 'data'
-							args '-v $HOME:/tmp/jenkins-home'
+							args '-u root -v /var/run/docker.sock:/var/run/docker.sock'
+							// root but with no maven caching
 						}
 					}
 					options { timeout(time: 30, unit: 'MINUTES') }
@@ -49,7 +50,8 @@ pipeline {
 						docker {
 							image 'adoptopenjdk/openjdk11:latest'
 							label 'data'
-							args '-v $HOME:/tmp/jenkins-home'
+							args '-u root -v /var/run/docker.sock:/var/run/docker.sock'
+							// root but with no maven caching
 						}
 					}
 					options { timeout(time: 30, unit: 'MINUTES') }

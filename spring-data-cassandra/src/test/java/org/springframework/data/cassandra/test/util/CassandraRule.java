@@ -48,9 +48,13 @@ import com.datastax.oss.driver.api.core.CqlSessionBuilder;
  * }
  * </pre>
  *
+ * Derives its configuration from {@code /config/cassandra-connection.properties} and {@link System#getenv(String)}
+ * {@code CASSANDRA_VERSION} to configure the Cassandra version via Testcontainers.
+ *
  * @author Mark Paluch
  * @author John Blum
  * @since 1.5
+ * @see CassandraConnectionProperties
  */
 public class CassandraRule extends ExternalResource {
 
