@@ -18,4 +18,4 @@ services:
 
 install: true
 
-script: ./mvn clean install -Pci,testcontainers-cassandra,java11 -Dmaven.javadoc.skip=true
+script: ./mvnw clean install -Pci,testcontainers-cassandra,java11 -Dmaven.javadoc.skip=true
