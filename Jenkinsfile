@@ -31,7 +31,31 @@ pipeline {
 					options { timeout(time: 30, unit: 'MINUTES') }
 					steps {
 						sh 'rm -rf ?'
-						sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/jenkins-home" ./mvnw clean dependency:list verify -Dsort -U -B'
+						sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/jenkins-home" ./mvnw -Pci,testcontainers-cassandra clean dependency:list verify -Dsort -U -B'
+					}
+				}
+			}
+		}
+		stage("Test other configurations") {
+			when {
+				anyOf {
+					branch 'master'
+					not { triggeredBy 'UpstreamCause' }
+				}
+			}
+			parallel {
+				stage("test: baseline (jdk11)") {
+					agent {
+						docker {
+							image 'adoptopenjdk/openjdk11:latest'
+							label 'data'
+							args '-v $HOME:/tmp/jenkins-home'
+						}
+					}
+					options { timeout(time: 30, unit: 'MINUTES') }
+					steps {
+						sh 'rm -rf ?'
+						sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/jenkins-home" ./mvnw -Pci,testcontainers-cassandra,java11 clean dependency:list verify -Dsort -U -B'
 					}
 				}
 			}
