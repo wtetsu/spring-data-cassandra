@@ -31,7 +31,7 @@ pipeline {
 					}
 				}
 				stage('Publish JDK 11 + Cassandra 3.11') {
-					when {openjdk11-8-cassandra-3.11
+					when {
 						changeset "ci/openjdk11-8-cassandra-3.11/**"
 					}
 					agent { label 'data' }
