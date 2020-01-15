@@ -15,9 +15,6 @@ pipeline {
 		stage("Docker images") {
 			parallel {
 				stage('Publish JDK 8 + Cassandra 3.11') {
-					when {
-						changeset "ci/openjdk8-cassandra-3.11/**"
-					}
 					agent { label 'data' }
 					options { timeout(time: 30, unit: 'MINUTES') }
 
@@ -31,9 +28,6 @@ pipeline {
 					}
 				}
 				stage('Publish JDK 11 + Cassandra 3.11') {
-					when {
-						changeset "ci/openjdk11-8-cassandra-3.11/**"
-					}
 					agent { label 'data' }
 					options { timeout(time: 30, unit: 'MINUTES') }
 
