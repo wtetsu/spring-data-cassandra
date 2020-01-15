@@ -17,3 +17,5 @@ RUN set -eux; \
 		rm -rf /tmp/openjdk.tar.gz;
 
 ENV PATH="/opt/java/openjdk8/bin:$PATH"
+ENV MAX_HEAP_SIZE=1500M
+ENV HEAP_NEWSIZE=300M

@@ -7,3 +7,6 @@ RUN set -eux; \
 		cd /opt/cassandra; \
 		tar -xf /tmp/cassandra.tar.gz --strip-components=1; \
 		rm -rf /tmp/cassandra.tar.gz;
+
+ENV MAX_HEAP_SIZE=1500M
+ENV HEAP_NEWSIZE=300M
