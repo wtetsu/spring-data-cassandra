@@ -9,7 +9,7 @@ RUN set -eux; \
 		cd /opt/cassandra; \
 		tar -xf /tmp/cassandra.tar.gz --strip-components=1; \
 		rm -rf /tmp/cassandra.tar.gz; \
-		chmod -R a+rwx /opt/cassandra;
+		chmod -R a+rwx /opt/cassandra; \
 		useradd -d /home/jenkins-docker -m -u 1001 -U jenkins-docker;
 
 ENV MAX_HEAP_SIZE=1500M
