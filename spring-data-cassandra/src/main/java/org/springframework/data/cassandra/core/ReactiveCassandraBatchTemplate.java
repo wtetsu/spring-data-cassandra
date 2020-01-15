@@ -15,6 +15,9 @@
  */
 package org.springframework.data.cassandra.core;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,8 +25,6 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import org.springframework.data.cassandra.core.convert.CassandraConverter;
 import org.springframework.data.cassandra.core.convert.UpdateMapper;
 import org.springframework.data.cassandra.core.cql.WriteOptions;
@@ -133,7 +134,7 @@ class ReactiveCassandraBatchTemplate implements ReactiveCassandraBatchOperations
 						.collectList() //
 						.flatMap(statements -> {
 
-							this.batch.addStatements(statements);
+							this.batch.addStatements((List<BatchableStatement<?>>) statements);
 
 							return this.operations.getReactiveCqlOperations().queryForResultSet(this.batch.build());
 
