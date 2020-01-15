@@ -6,7 +6,8 @@ RUN set -eux; \
 		mkdir -p /opt/cassandra; \
 		cd /opt/cassandra; \
 		tar -xf /tmp/cassandra.tar.gz --strip-components=1; \
-		rm -rf /tmp/cassandra.tar.gz;
+		rm -rf /tmp/cassandra.tar.gz; \
+		chmod -R a+rwx /opt/cassandra;
 
 RUN set -eux; \
 	BINARY_URL='https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u232-b09/OpenJDK8U-jdk_x64_linux_hotspot_8u232b09.tar.gz'; \

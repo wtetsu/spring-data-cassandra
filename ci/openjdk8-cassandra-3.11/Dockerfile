@@ -6,7 +6,8 @@ RUN set -eux; \
 		mkdir -p /opt/cassandra; \
 		cd /opt/cassandra; \
 		tar -xf /tmp/cassandra.tar.gz --strip-components=1; \
-		rm -rf /tmp/cassandra.tar.gz;
+		rm -rf /tmp/cassandra.tar.gz; \
+		chmod -R a+rwx /opt/cassandra;
 
 ENV MAX_HEAP_SIZE=1500M
 ENV HEAP_NEWSIZE=300M
