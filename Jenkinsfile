@@ -23,7 +23,7 @@ pipeline {
 
 					steps {
 						script {
-							def image = docker.build("springci/openjdk8-cassandra-3.11", "ci/openjdk8-cassandra-3.11/")
+							def image = docker.build("springci/spring-data-openjdk8-cassandra-3.11", "ci/openjdk8-cassandra-3.11/")
 							docker.withRegistry('', 'hub.docker.com-springbuildmaster') {
 								image.push()
 							}
@@ -31,7 +31,7 @@ pipeline {
 					}
 				}
 				stage('Publish JDK 11 + Cassandra 3.11') {
-					when {
+					when {openjdk11-8-cassandra-3.11
 						changeset "ci/openjdk11-8-cassandra-3.11/**"
 					}
 					agent { label 'data' }
@@ -59,7 +59,7 @@ pipeline {
 				stage("test: baseline") {
 					agent {
 						docker {
-							image 'springci/openjdk8-cassandra-3.11:latest'
+							image 'springci/spring-data-openjdk8-cassandra-3.11:latest'
 							label 'data'
 							args '-v $HOME:/tmp/jenkins-home'
 						}
@@ -86,7 +86,7 @@ pipeline {
 				stage("test: baseline (jdk11)") {
 					agent {
 						docker {
-							image 'springci/openjdk11-8-cassandra-3.11:latest'
+							image 'springci/spring-data-openjdk11-8-cassandra-3.11:latest'
 							label 'data'
 							args '-v $HOME:/tmp/jenkins-home'
 						}
