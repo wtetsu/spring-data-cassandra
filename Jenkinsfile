@@ -67,6 +67,7 @@ pipeline {
 					options { timeout(time: 30, unit: 'MINUTES') }
 					steps {
 						sh 'rm -rf ?'
+						sh 'id'
 						sh 'JAVA_HOME=/opt/java/openjdk /opt/cassandra/bin/cassandra -R &'
 						sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/jenkins-home" ./mvnw -Pci,external-cassandra clean dependency:list verify -Dsort -U -B'
 					}
