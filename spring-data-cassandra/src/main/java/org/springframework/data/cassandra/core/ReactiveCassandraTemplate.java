@@ -111,19 +111,19 @@ public class ReactiveCassandraTemplate
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	private @Nullable ApplicationEventPublisher eventPublisher;
-
-	private @Nullable ReactiveEntityCallbacks entityCallbacks;
+	private final ReactiveCqlOperations cqlOperations;
 
 	private final CassandraConverter converter;
 
 	private final EntityOperations entityOperations;
 
-	private final ReactiveCqlOperations cqlOperations;
-
 	private final SpelAwareProxyProjectionFactory projectionFactory;
 
 	private final StatementFactory statementFactory;
+
+	private @Nullable ApplicationEventPublisher eventPublisher;
+
+	private @Nullable ReactiveEntityCallbacks entityCallbacks;
 
 	private boolean usePreparedStatements = false;
 
@@ -230,6 +230,14 @@ public class ReactiveCassandraTemplate
 	}
 
 	/* (non-Javadoc)
+	 * @see org.springframework.data.cassandra.core.ReactiveCassandraOperations#getReactiveCqlOperations()
+	 */
+	@Override
+	public ReactiveCqlOperations getReactiveCqlOperations() {
+		return this.cqlOperations;
+	}
+
+	/* (non-Javadoc)
 	 * @see org.springframework.data.cassandra.core.ReactiveCassandraOperations#getConverter()
 	 */
 	@Override
@@ -285,14 +293,6 @@ public class ReactiveCassandraTemplate
 	 */
 	protected SpelAwareProxyProjectionFactory getProjectionFactory() {
 		return this.projectionFactory;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.springframework.data.cassandra.core.ReactiveCassandraOperations#getReactiveCqlOperations()
-	 */
-	@Override
-	public ReactiveCqlOperations getReactiveCqlOperations() {
-		return this.cqlOperations;
 	}
 
 	private CassandraPersistentEntity<?> getRequiredPersistentEntity(Class<?> entityType) {

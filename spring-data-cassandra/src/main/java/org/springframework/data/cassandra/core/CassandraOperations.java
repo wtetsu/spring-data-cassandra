@@ -59,19 +59,19 @@ public interface CassandraOperations extends FluentCassandraOperations {
 	CassandraBatchOperations batchOps();
 
 	/**
-	 * Returns the underlying {@link CassandraConverter}.
-	 *
-	 * @return the underlying {@link CassandraConverter}.
-	 */
-	CassandraConverter getConverter();
-
-	/**
 	 * Expose the underlying {@link CqlOperations} to allow CQL operations.
 	 *
 	 * @return the underlying {@link CqlOperations}.
 	 * @see CqlOperations
 	 */
 	CqlOperations getCqlOperations();
+
+	/**
+	 * Returns the underlying {@link CassandraConverter}.
+	 *
+	 * @return the underlying {@link CassandraConverter}.
+	 */
+	CassandraConverter getConverter();
 
 	/**
 	 * The table name used for the specified class by this template.

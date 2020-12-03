@@ -50,7 +50,6 @@ import org.springframework.data.cassandra.core.cql.WriteOptions;
 import org.springframework.data.cassandra.core.cql.session.DefaultSessionFactory;
 import org.springframework.data.cassandra.core.cql.util.StatementBuilder;
 import org.springframework.data.cassandra.core.mapping.CassandraPersistentEntity;
-import org.springframework.data.cassandra.core.mapping.CassandraPersistentProperty;
 import org.springframework.data.cassandra.core.mapping.event.AfterConvertEvent;
 import org.springframework.data.cassandra.core.mapping.event.AfterDeleteEvent;
 import org.springframework.data.cassandra.core.mapping.event.AfterLoadEvent;
@@ -64,7 +63,6 @@ import org.springframework.data.cassandra.core.query.Columns;
 import org.springframework.data.cassandra.core.query.Query;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.mapping.callback.EntityCallbacks;
-import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.lang.Nullable;
@@ -117,21 +115,19 @@ public class CassandraTemplate implements CassandraOperations, ApplicationEventP
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	private @Nullable ApplicationEventPublisher eventPublisher;
-
-	private @Nullable EntityCallbacks entityCallbacks;
+	private final CqlOperations cqlOperations;
 
 	private final CassandraConverter converter;
 
-	private final CqlOperations cqlOperations;
-
 	private final EntityOperations entityOperations;
-
-	private final MappingContext<? extends CassandraPersistentEntity<?>, CassandraPersistentProperty> mappingContext;
 
 	private final SpelAwareProxyProjectionFactory projectionFactory;
 
 	private final StatementFactory statementFactory;
+
+	private @Nullable ApplicationEventPublisher eventPublisher;
+
+	private @Nullable EntityCallbacks entityCallbacks;
 
 	private boolean usePreparedStatements = false;
 
@@ -193,7 +189,6 @@ public class CassandraTemplate implements CassandraOperations, ApplicationEventP
 		this.converter = converter;
 		this.cqlOperations = cqlOperations;
 		this.entityOperations = new EntityOperations(converter.getMappingContext());
-		this.mappingContext = converter.getMappingContext();
 		this.projectionFactory = new SpelAwareProxyProjectionFactory();
 		this.statementFactory = new StatementFactory(new QueryMapper(converter), new UpdateMapper(converter));
 	}
@@ -238,19 +233,19 @@ public class CassandraTemplate implements CassandraOperations, ApplicationEventP
 	}
 
 	/* (non-Javadoc)
-	 * @see org.springframework.data.cassandra.core.CassandraOperations#getConverter()
-	 */
-	@Override
-	public CassandraConverter getConverter() {
-		return this.converter;
-	}
-
-	/* (non-Javadoc)
 	 * @see org.springframework.data.cassandra.core.CassandraOperations#CqlOperations()
 	 */
 	@Override
 	public CqlOperations getCqlOperations() {
 		return this.cqlOperations;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.springframework.data.cassandra.core.CassandraOperations#getConverter()
+	 */
+	@Override
+	public CassandraConverter getConverter() {
+		return this.converter;
 	}
 
 	/**

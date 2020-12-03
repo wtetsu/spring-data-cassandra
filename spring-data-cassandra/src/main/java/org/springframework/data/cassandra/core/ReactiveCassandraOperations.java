@@ -60,19 +60,19 @@ public interface ReactiveCassandraOperations extends ReactiveFluentCassandraOper
 	ReactiveCassandraBatchOperations batchOps();
 
 	/**
-	 * Returns the underlying {@link CassandraConverter}.
-	 *
-	 * @return the underlying {@link CassandraConverter}.
-	 */
-	CassandraConverter getConverter();
-
-	/**
 	 * Expose the underlying {@link ReactiveCqlOperations} to allow CQL operations.
 	 *
 	 * @return the underlying {@link ReactiveCqlOperations}.
 	 * @see ReactiveCqlOperations
 	 */
 	ReactiveCqlOperations getReactiveCqlOperations();
+
+	/**
+	 * Returns the underlying {@link CassandraConverter}.
+	 *
+	 * @return the underlying {@link CassandraConverter}.
+	 */
+	CassandraConverter getConverter();
 
 	// -------------------------------------------------------------------------
 	// Methods dealing with static CQL
