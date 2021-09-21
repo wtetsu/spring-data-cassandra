@@ -436,11 +436,6 @@ public class EmbeddedEntityOperations {
 		}
 
 		@Override
-		public Iterable<? extends TypeInformation<?>> getPersistentEntityTypes() {
-			return delegate.getPersistentEntityTypes();
-		}
-
-		@Override
 		@org.springframework.lang.Nullable
 		public Method getGetter() {
 			return delegate.getGetter();
