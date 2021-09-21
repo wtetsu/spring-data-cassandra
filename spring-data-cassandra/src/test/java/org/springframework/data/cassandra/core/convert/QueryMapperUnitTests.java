@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.Currency;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -79,37 +78,37 @@ import lombok.Data;
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class QueryMapperUnitTests {
 
-	private CassandraMappingContext mappingContext = new CassandraMappingContext();
+	private final CassandraMappingContext mappingContext = new CassandraMappingContext();
 
-	private CassandraPersistentEntity<?> persistentEntity;
-
-	private MappingCassandraConverter cassandraConverter;
+	private CassandraPersistentEntity<?> personPersistentEntity;
 
 	private QueryMapper queryMapper;
 
-	private com.datastax.oss.driver.api.core.type.UserDefinedType userType = UserDefinedTypeBuilder.forName("address")
-			.withField("street", DataTypes.TEXT).build();
+	private final com.datastax.oss.driver.api.core.type.UserDefinedType userType =
+		UserDefinedTypeBuilder.forName("address")
+			.withField("street", DataTypes.TEXT)
+			.build();
 
 	@Mock UserTypeResolver userTypeResolver;
 
 	@BeforeEach
 	void before() {
 
-		CassandraCustomConversions customConversions = new CassandraCustomConversions(
-				Collections.singletonList(CurrencyConverter.INSTANCE));
+		CassandraCustomConversions customConversions =
+			new CassandraCustomConversions(Collections.singletonList(CurrencyConverter.INSTANCE));
+
+		when(userTypeResolver.resolveType(any(CqlIdentifier.class))).thenReturn(userType);
 
 		mappingContext.setCustomConversions(customConversions);
 		mappingContext.setUserTypeResolver(userTypeResolver);
 
-		cassandraConverter = new MappingCassandraConverter(mappingContext);
+		MappingCassandraConverter cassandraConverter = new MappingCassandraConverter(mappingContext);
+
 		cassandraConverter.setCustomConversions(customConversions);
 		cassandraConverter.afterPropertiesSet();
 
 		queryMapper = new QueryMapper(cassandraConverter);
-
-		when(userTypeResolver.resolveType(any(CqlIdentifier.class))).thenReturn(userType);
-
-		persistentEntity = mappingContext.getRequiredPersistentEntity(Person.class);
+		personPersistentEntity = mappingContext.getRequiredPersistentEntity(Person.class);
 	}
 
 	@Test // DATACASS-343
@@ -117,7 +116,7 @@ public class QueryMapperUnitTests {
 
 		Query query = Query.query(Criteria.where("foo_name").is("bar"));
 
-		Filter mappedObject = queryMapper.getMappedObject(query, persistentEntity);
+		Filter mappedObject = queryMapper.getMappedObject(query, personPersistentEntity);
 
 		CriteriaDefinition mappedCriteriaDefinition = mappedObject.iterator().next();
 
@@ -130,7 +129,7 @@ public class QueryMapperUnitTests {
 
 		Query query = Query.query(Criteria.where("foo_name").is(State.Active));
 
-		Filter mappedObject = queryMapper.getMappedObject(query, persistentEntity);
+		Filter mappedObject = queryMapper.getMappedObject(query, personPersistentEntity);
 
 		CriteriaDefinition mappedCriteriaDefinition = mappedObject.iterator().next();
 
@@ -142,7 +141,7 @@ public class QueryMapperUnitTests {
 
 		Query query = Query.query(Criteria.where("number").is(State.Inactive));
 
-		Filter mappedObject = queryMapper.getMappedObject(query, persistentEntity);
+		Filter mappedObject = queryMapper.getMappedObject(query, personPersistentEntity);
 
 		CriteriaDefinition mappedCriteriaDefinition = mappedObject.iterator().next();
 
@@ -154,7 +153,7 @@ public class QueryMapperUnitTests {
 
 		Query query = Query.query(Criteria.where("number").in(State.Inactive));
 
-		Filter mappedObject = queryMapper.getMappedObject(query, persistentEntity);
+		Filter mappedObject = queryMapper.getMappedObject(query, personPersistentEntity);
 
 		CriteriaDefinition mappedCriteriaDefinition = mappedObject.iterator().next();
 
@@ -167,7 +166,7 @@ public class QueryMapperUnitTests {
 
 		Query query = Query.query(Criteria.where("foo_name").is(Currency.getInstance("EUR")));
 
-		Filter mappedObject = queryMapper.getMappedObject(query, persistentEntity);
+		Filter mappedObject = queryMapper.getMappedObject(query, personPersistentEntity);
 
 		CriteriaDefinition mappedCriteriaDefinition = mappedObject.iterator().next();
 
@@ -180,7 +179,7 @@ public class QueryMapperUnitTests {
 
 		Query query = Query.query(Criteria.where("foo_name").in(Currency.getInstance("EUR")));
 
-		Filter mappedObject = queryMapper.getMappedObject(query, persistentEntity);
+		Filter mappedObject = queryMapper.getMappedObject(query, personPersistentEntity);
 
 		CriteriaDefinition mappedCriteriaDefinition = mappedObject.iterator().next();
 
@@ -193,7 +192,7 @@ public class QueryMapperUnitTests {
 
 		Query query = Query.query(Criteria.where("address").is(new Address("21 Jump-Street")));
 
-		Filter mappedObject = queryMapper.getMappedObject(query, persistentEntity);
+		Filter mappedObject = queryMapper.getMappedObject(query, personPersistentEntity);
 
 		CriteriaDefinition mappedCriteriaDefinition = mappedObject.iterator().next();
 		CriteriaDefinition.Predicate predicate = mappedCriteriaDefinition.getPredicate();
@@ -204,11 +203,12 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATACASS-343
+	@SuppressWarnings("unchecked")
 	void shouldMapApplyingUdtValueCollectionConversion() {
 
 		Query query = Query.query(Criteria.where("address").in(new Address("21 Jump-Street")));
 
-		Filter mappedObject = queryMapper.getMappedObject(query, persistentEntity);
+		Filter mappedObject = queryMapper.getMappedObject(query, personPersistentEntity);
 
 		CriteriaDefinition mappedCriteriaDefinition = mappedObject.iterator().next();
 
@@ -221,11 +221,12 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATACASS-343
+	@SuppressWarnings("unchecked")
 	void shouldMapCollectionApplyingUdtValueCollectionConversion() {
 
 		Query query = Query.query(Criteria.where("address").in(new Address("21 Jump-Street")));
 
-		Filter mappedObject = queryMapper.getMappedObject(query, persistentEntity);
+		Filter mappedObject = queryMapper.getMappedObject(query, personPersistentEntity);
 
 		CriteriaDefinition mappedCriteriaDefinition = mappedObject.iterator().next();
 		CriteriaDefinition.Predicate predicate = mappedCriteriaDefinition.getPredicate();
@@ -241,7 +242,7 @@ public class QueryMapperUnitTests {
 
 		Query query = Query.query(Criteria.where("relocations").containsKey(new Address("21 Jump-Street")));
 
-		Filter mappedObject = queryMapper.getMappedObject(query, persistentEntity);
+		Filter mappedObject = queryMapper.getMappedObject(query, personPersistentEntity);
 
 		CriteriaDefinition mappedCriteriaDefinition = mappedObject.iterator().next();
 
@@ -256,7 +257,7 @@ public class QueryMapperUnitTests {
 
 		Query query = Query.query(Criteria.where("relocations").contains(new Address("21 Jump-Street")));
 
-		Filter mappedObject = queryMapper.getMappedObject(query, persistentEntity);
+		Filter mappedObject = queryMapper.getMappedObject(query, personPersistentEntity);
 
 		CriteriaDefinition mappedCriteriaDefinition = mappedObject.iterator().next();
 
@@ -271,7 +272,7 @@ public class QueryMapperUnitTests {
 
 		Query query = Query.query(Criteria.where("firstName").is("bar"));
 
-		Filter mappedObject = queryMapper.getMappedObject(query, persistentEntity);
+		Filter mappedObject = queryMapper.getMappedObject(query, personPersistentEntity);
 
 		CriteriaDefinition mappedCriteriaDefinition = mappedObject.iterator().next();
 
@@ -283,7 +284,7 @@ public class QueryMapperUnitTests {
 	@Test // DATACASS-343
 	void shouldCreateSelectExpression() {
 
-		List<Selector> selectors = queryMapper.getMappedSelectors(Columns.empty(), persistentEntity);
+		List<Selector> selectors = queryMapper.getMappedSelectors(Columns.empty(), personPersistentEntity);
 
 		assertThat(selectors).isEmpty();
 	}
@@ -292,8 +293,7 @@ public class QueryMapperUnitTests {
 	void shouldCreateSelectExpressionWithTTL() {
 
 		List<String> selectors = queryMapper
-				.getMappedSelectors(Columns.from("number", "foo").ttl("firstName"),
-						mappingContext.getRequiredPersistentEntity(Person.class))
+				.getMappedSelectors(Columns.from("number", "foo").ttl("firstName"), personPersistentEntity)
 				.stream().map(Selector::toString).collect(Collectors.toList());
 
 		assertThat(selectors).contains("number").contains("foo").contains("TTL(first_name)");
@@ -302,8 +302,8 @@ public class QueryMapperUnitTests {
 	@Test // DATACASS-343
 	void shouldIncludeColumnsSelectExpressionWithTTL() {
 
-		List<CqlIdentifier> selectors = queryMapper.getMappedColumnNames(Columns.from("number", "foo").ttl("firstName"),
-				persistentEntity);
+		List<CqlIdentifier> selectors =
+			queryMapper.getMappedColumnNames(Columns.from("number", "foo").ttl("firstName"), personPersistentEntity);
 
 		assertThat(selectors).contains(CqlIdentifier.fromCql("number"), CqlIdentifier.fromCql("foo")).hasSize(2);
 	}
@@ -353,14 +353,14 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATACASS-523
+	@SuppressWarnings("all")
 	void shouldMapTuple() {
 
 		MappedTuple tuple = new MappedTuple("foo");
 
 		Filter filter = Filter.from(Criteria.where("tuple").is(tuple));
 
-		Filter mappedObject = this.queryMapper.getMappedObject(filter,
-				this.mappingContext.getRequiredPersistentEntity(Person.class));
+		Filter mappedObject = this.queryMapper.getMappedObject(filter, this.personPersistentEntity);
 
 		TupleValue tupleValue = DataTypes.tupleOf(DataTypes.TEXT).newValue();
 
@@ -370,22 +370,33 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATACASS-302
+	// NOTE: DataStax Cassandra OSS Java Driver is already capable of handling Java Time types since 4.x. (at least).
+	// see https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/TypeCodecs.html
+	// Therefore java.time.LocalTime on an entity property type maps to java.time.LocalTime in a CQL query.
 	void shouldMapTime() {
 
-		Filter filter = Filter.from(Criteria.where("localTime").gt(LocalTime.ofNanoOfDay(1000)));
+		LocalTime time = LocalTime.ofNanoOfDay(1000);
 
-		Filter mappedObject = this.queryMapper.getMappedObject(filter,
-				this.mappingContext.getRequiredPersistentEntity(Person.class));
+		Filter filter = Filter.from(Criteria.where("localTime").gt(time));
 
-		assertThat(mappedObject)
-				.contains(Criteria.where("localtime").gt(java.time.LocalTime.ofNanoOfDay(TimeUnit.MILLISECONDS.toNanos(1000))));
+		Filter mappedFilter = this.queryMapper. getMappedObject(filter, this.personPersistentEntity);
+
+		/*
+		mappedFilter.get().findFirst()
+			.map(CriteriaDefinition::getPredicate)
+			.map(CriteriaDefinition.Predicate::getValue)
+			.map(Object::getClass)
+			.ifPresent(System.out::println);
+		*/
+
+		assertThat(mappedFilter).contains(Criteria.where("localtime").gt(time));
 	}
 
 	@Test // DATACASS-523
 	void referencingTupleElementsInQueryShouldFail() {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> this.queryMapper.getMappedObject(Filter.from(Criteria.where("tuple.zip").is("123")),
-						this.mappingContext.getRequiredPersistentEntity(Person.class)));
+						this.personPersistentEntity));
 	}
 
 	@Test // DATACASS-167
@@ -410,6 +421,7 @@ public class QueryMapperUnitTests {
 		assertThat(mappedObject.iterator().next().getColumnName()).isEqualTo(ColumnName.from("prefixfirstname"));
 	}
 
+	@SuppressWarnings("unused")
 	static class Person {
 
 		@Id String id;
@@ -428,6 +440,7 @@ public class QueryMapperUnitTests {
 		MappedTuple tuple;
 
 		@Column("first_name") String firstName;
+
 	}
 
 	@Tuple
@@ -443,7 +456,7 @@ public class QueryMapperUnitTests {
 	}
 
 	enum State {
-		Active, Inactive;
+		Active, Inactive
 	}
 
 	@Data

@@ -35,8 +35,19 @@ import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
-import org.springframework.data.cassandra.core.mapping.*;
+import org.springframework.data.cassandra.core.mapping.BasicCassandraPersistentEntity;
+import org.springframework.data.cassandra.core.mapping.BasicMapId;
+import org.springframework.data.cassandra.core.mapping.CassandraMappingContext;
+import org.springframework.data.cassandra.core.mapping.CassandraPersistentEntity;
+import org.springframework.data.cassandra.core.mapping.CassandraPersistentProperty;
+import org.springframework.data.cassandra.core.mapping.Column;
+import org.springframework.data.cassandra.core.mapping.Element;
+import org.springframework.data.cassandra.core.mapping.Embedded;
 import org.springframework.data.cassandra.core.mapping.Embedded.OnEmpty;
+import org.springframework.data.cassandra.core.mapping.EmbeddedEntityOperations;
+import org.springframework.data.cassandra.core.mapping.MapId;
+import org.springframework.data.cassandra.core.mapping.MapIdentifiable;
+import org.springframework.data.cassandra.core.mapping.UserTypeResolver;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PreferredConstructor;
@@ -100,19 +111,7 @@ public class MappingCassandraConverter extends AbstractCassandraConverter
 	 * Create a new {@link MappingCassandraConverter} with a {@link CassandraMappingContext}.
 	 */
 	public MappingCassandraConverter() {
-
-		super(newConversionService());
-
-		CassandraCustomConversions conversions = new CassandraCustomConversions(Collections.emptyList());
-
-		this.mappingContext = newDefaultMappingContext(conversions);
-		this.codecRegistry = mappingContext.getCodecRegistry();
-		this.spELContext = new SpELContext(RowReaderPropertyAccessor.INSTANCE);
-		this.cassandraTypeResolver = new DefaultColumnTypeResolver(mappingContext,
-				userTypeName -> getUserTypeResolver().resolveType(userTypeName), this::getCodecRegistry,
-				this::getCustomConversions);
-		this.setCustomConversions(conversions);
-		this.embeddedEntityOperations = new EmbeddedEntityOperations(mappingContext);
+		this(newDefaultMappingContext(new CassandraCustomConversions(Collections.emptyList())));
 	}
 
 	/**
@@ -126,24 +125,27 @@ public class MappingCassandraConverter extends AbstractCassandraConverter
 
 		Assert.notNull(mappingContext, "CassandraMappingContext must not be null");
 
+		UserTypeResolver userTypeResolver = userTypeName -> getUserTypeResolver().resolveType(userTypeName);
+
 		this.mappingContext = mappingContext;
-		this.codecRegistry = mappingContext.getCodecRegistry();
-		this.spELContext = new SpELContext(RowReaderPropertyAccessor.INSTANCE);
-		this.cassandraTypeResolver = new DefaultColumnTypeResolver(mappingContext,
-				userTypeName -> getUserTypeResolver().resolveType(userTypeName), this::getCodecRegistry,
-				this::getCustomConversions);
+		this.setCodecRegistry(mappingContext.getCodecRegistry());
 		this.setCustomConversions(mappingContext.getCustomConversions());
+		this.cassandraTypeResolver = new DefaultColumnTypeResolver(mappingContext, userTypeResolver,
+			this::getCodecRegistry, this::getCustomConversions);
 		this.embeddedEntityOperations = new EmbeddedEntityOperations(mappingContext);
+		this.spELContext = new SpELContext(RowReaderPropertyAccessor.INSTANCE);
 	}
 
 	/**
-	 * Creates a new {@link ConversionContext}.
+	 * Constructs a new instance of {@link ConversionContext} with various converters to convert different Cassandra
+	 * value types.
 	 *
 	 * @return the {@link ConversionContext}.
+	 * @see ConversionContext
 	 */
 	protected ConversionContext getConversionContext() {
 
-		return new ConversionContext(getCustomConversions(), this::doReadRow, this::doReadTupleValue, this::doReadUdtValue,
+		return new ConversionContext(this::doReadRow, this::doReadTupleValue, this::doReadUdtValue,
 				this::readCollectionOrArray, this::readMap, this::getPotentiallyConvertedSimpleRead);
 	}
 
@@ -151,6 +153,14 @@ public class MappingCassandraConverter extends AbstractCassandraConverter
 		return new DefaultConversionService();
 	}
 
+	/**
+	 * Constructs a new instance of a {@link MappingContext} for Cassandra.
+	 *
+	 * @param conversions {@link CassandraCustomConversions} object encapsulating complex type conversion logic.
+	 * @return a new {@link CassandraMappingContext}.
+	 * @see org.springframework.data.cassandra.core.mapping.CassandraMappingContext
+	 * @see org.springframework.data.mapping.context.MappingContext
+	 */
 	private static CassandraMappingContext newDefaultMappingContext(CassandraCustomConversions conversions) {
 
 		CassandraMappingContext mappingContext = new CassandraMappingContext();
@@ -160,6 +170,7 @@ public class MappingCassandraConverter extends AbstractCassandraConverter
 
 		return mappingContext;
 	}
+
 
 	/* (non-Javadoc)
 	 * @see org.springframework.context.ApplicationContextAware#setApplicationContext(org.springframework.context.ApplicationContext)
@@ -202,12 +213,7 @@ public class MappingCassandraConverter extends AbstractCassandraConverter
 	 */
 	@Override
 	public CodecRegistry getCodecRegistry() {
-
-		if (this.codecRegistry == null) {
-			return mappingContext.getCodecRegistry();
-		}
-
-		return this.codecRegistry;
+		return this.codecRegistry != null ? this.codecRegistry : getMappingContext().getCodecRegistry();
 	}
 
 	/**
@@ -229,12 +235,7 @@ public class MappingCassandraConverter extends AbstractCassandraConverter
 	 * @since 3.0
 	 */
 	public UserTypeResolver getUserTypeResolver() {
-
-		if (this.userTypeResolver == null) {
-			return this.mappingContext.getUserTypeResolver();
-		}
-
-		return userTypeResolver;
+		return this.userTypeResolver != null ? this.userTypeResolver : getMappingContext().getUserTypeResolver();
 	}
 
 	/* (non-Javadoc)
@@ -367,8 +368,8 @@ public class MappingCassandraConverter extends AbstractCassandraConverter
 			return (S) getConversionService().convert(valueProvider.getSource(), rawType);
 		}
 
-		CassandraPersistentEntity<S> entity = (CassandraPersistentEntity<S>) getMappingContext()
-				.getPersistentEntity(typeHint);
+		CassandraPersistentEntity<S> entity =
+			(CassandraPersistentEntity<S>) getMappingContext().getPersistentEntity(typeHint);
 
 		if (entity == null) {
 			throw new MappingException(
@@ -393,8 +394,8 @@ public class MappingCassandraConverter extends AbstractCassandraConverter
 			return UdtValue.class;
 		}
 
-		throw new InvalidDataAccessApiUsageException(
-				"Unsupported source type: " + ClassUtils.getDescriptiveType(valueProvider.getSource()));
+		throw new InvalidDataAccessApiUsageException(String.format("Unsupported source type: %s",
+			ClassUtils.getDescriptiveType(valueProvider.getSource())));
 	}
 
 	private <S> S doReadEntity(ConversionContext context, CassandraValueProvider valueProvider,
@@ -405,8 +406,8 @@ public class MappingCassandraConverter extends AbstractCassandraConverter
 
 		if (persistenceConstructor != null && persistenceConstructor.hasParameters()) {
 			SpELExpressionEvaluator evaluator = new DefaultSpELExpressionEvaluator(valueProvider.getSource(), spELContext);
-			ParameterValueProvider<CassandraPersistentProperty> parameterValueProvider = newParameterValueProvider(context,
-					entity, valueProvider);
+			ParameterValueProvider<CassandraPersistentProperty> parameterValueProvider =
+				newParameterValueProvider(context, entity, valueProvider);
 			provider = new ConverterAwareSpELExpressionParameterValueProvider(evaluator, getConversionService(),
 					parameterValueProvider, context);
 		} else {
@@ -744,10 +745,7 @@ public class MappingCassandraConverter extends AbstractCassandraConverter
 
 	/**
 	 * Check custom conversions for type override or fall back to
-	 * {@link #determineTargetType(CassandraPersistentProperty)}
-	 *
-	 * @param property
-	 * @return
+	 * {@link ColumnTypeResolver#resolve(CassandraPersistentProperty)}.
 	 */
 	private Class<?> getTargetType(CassandraPersistentProperty property) {
 		return getCustomConversions().getCustomWriteTarget(property.getType())
@@ -792,7 +790,8 @@ public class MappingCassandraConverter extends AbstractCassandraConverter
 
 		if (getCustomConversions().hasCustomWriteTarget(value.getClass(), requestedTargetType)) {
 
-			Class<?> resolvedTargetType = getCustomConversions().getCustomWriteTarget(value.getClass(), requestedTargetType)
+			Class<?> resolvedTargetType = getCustomConversions()
+					.getCustomWriteTarget(value.getClass(), requestedTargetType)
 					.orElse(requestedTargetType);
 
 			return getConversionService().convert(value, resolvedTargetType);
@@ -800,9 +799,11 @@ public class MappingCassandraConverter extends AbstractCassandraConverter
 
 		if (getCustomConversions().hasCustomWriteTarget(value.getClass())) {
 
-			Class<?> resolvedTargetType = getCustomConversions().getCustomWriteTarget(value.getClass())
-					.orElseThrow(() -> new IllegalStateException(String
-							.format("Unable to determined custom write target for value type [%s]", value.getClass().getName())));
+			Class<?> resolvedTargetType = getCustomConversions()
+					.getCustomWriteTarget(value.getClass())
+					.orElseThrow(() -> new IllegalStateException(
+						String.format("Unable to determined custom write target for value type [%s]",
+							value.getClass().getName())));
 
 			return getConversionService().convert(value, resolvedTargetType);
 		}
@@ -986,6 +987,7 @@ public class MappingCassandraConverter extends AbstractCassandraConverter
 		}
 
 		Object value = valueProvider.getPropertyValue(property);
+
 		return value == null ? null : context.convert(value, property.getTypeInformation());
 	}
 
