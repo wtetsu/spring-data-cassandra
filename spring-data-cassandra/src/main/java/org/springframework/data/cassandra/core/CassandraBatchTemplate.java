@@ -15,6 +15,7 @@
  */
 package org.springframework.data.cassandra.core;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -42,6 +43,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
  * @since 1.5
  */
 class CassandraBatchTemplate implements CassandraBatchOperations {
+//public class CassandraBatchTemplate implements CassandraBatchOperations {
 
 	private final AtomicBoolean executed = new AtomicBoolean();
 
@@ -60,14 +62,23 @@ class CassandraBatchTemplate implements CassandraBatchOperations {
 	 *
 	 * @param operations must not be {@literal null}.
 	 */
-	CassandraBatchTemplate(CassandraOperations operations) {
-
+	public CassandraBatchTemplate(CassandraOperations operations) {
 		Assert.notNull(operations, "CassandraOperations must not be null");
 
 		this.operations = operations;
 		this.converter = operations.getConverter();
 		this.mappingContext = this.converter.getMappingContext();
 		this.statementFactory = new StatementFactory(new UpdateMapper(converter));
+	}
+
+	/**
+	 * Create a new {@link CassandraBatchTemplate} given {@link CassandraOperations} with {@link ConsistencyLevel}.
+	 *
+	 * @param operations must not be {@literal null}.
+	 */
+	public CassandraBatchTemplate(CassandraOperations operations, ConsistencyLevel consistencyLevel) {
+		this(operations);
+		batch.setConsistencyLevel(consistencyLevel);
 	}
 
 	/**

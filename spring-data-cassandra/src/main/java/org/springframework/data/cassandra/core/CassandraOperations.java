@@ -15,6 +15,7 @@
  */
 package org.springframework.data.cassandra.core;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -57,6 +58,14 @@ public interface CassandraOperations extends FluentCassandraOperations {
 	 * @return a new {@link CassandraBatchOperations} associated with the given entity class.
 	 */
 	CassandraBatchOperations batchOps();
+
+	/**
+	 * Returns a new {@link CassandraBatchOperations}. Each {@link CassandraBatchOperations} instance can be executed only
+	 * once so you might want to obtain new {@link CassandraBatchOperations} instances for each batch.
+	 *
+	 * @return a new {@link CassandraBatchOperations} associated with the given entity class.
+	 */
+	CassandraBatchOperations batchOps(ConsistencyLevel consistencyLevel);
 
 	/**
 	 * Expose the underlying {@link CqlOperations} to allow CQL operations.

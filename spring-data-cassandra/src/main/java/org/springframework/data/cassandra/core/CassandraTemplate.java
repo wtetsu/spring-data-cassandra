@@ -15,6 +15,7 @@
  */
 package org.springframework.data.cassandra.core;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -201,6 +202,12 @@ public class CassandraTemplate implements CassandraOperations, ApplicationEventP
 	public CassandraBatchOperations batchOps() {
 		return new CassandraBatchTemplate(this);
 	}
+
+	@Override
+	public CassandraBatchOperations batchOps(ConsistencyLevel consistencyLevel) {
+		return new CassandraBatchTemplate(this, consistencyLevel);
+	}
+
 
 	/* (non-Javadoc)
 	 * @see org.springframework.context.ApplicationEventPublisherAware#setApplicationEventPublisher(org.springframework.context.ApplicationEventPublisher)
